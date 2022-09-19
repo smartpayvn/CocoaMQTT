@@ -242,7 +242,7 @@ public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     private lazy var writeTimeoutTimer = ReusableTimer(queue: internalQueue)
     private func checkScheduledWrites() {
         writeTimeoutTimer.reset()
-        guard let closestTimeout = scheduledWrites.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout else { return }
+        guard !scheduledWrites.isEmpty, let closestTimeout = scheduledWrites.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout else { return }
         if closestTimeout < .now() {
             closeConnection(withError: CocoaMQTTError.writeTimeout)
         } else {
