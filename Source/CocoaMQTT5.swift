@@ -78,6 +78,14 @@ import MqttCocoaAsyncSocket
     @objc optional func mqtt5(_ mqtt5: CocoaMQTT5, didStateChangeTo state: CocoaMQTTConnState)
 }
 
+/// set mqtt version to 5.0
+public func setMqtt5Version(){
+    if let storage = CocoaMQTTStorage() {
+        storage.setMQTTVersion("5.0")
+    }
+}
+
+
 /**
  * Blueprint of the MQTT Client
  */
@@ -124,7 +132,7 @@ protocol CocoaMQTT5Client {
 
 /// MQTT Client
 ///
-/// - Note: GCDAsyncSocket need delegate to extend NSObject
+/// - Note: MGCDAsyncSocket need delegate to extend NSObject
 public class CocoaMQTT5: NSObject, CocoaMQTT5Client {
 
     public weak var delegate: CocoaMQTT5Delegate?
@@ -307,7 +315,7 @@ public class CocoaMQTT5: NSObject, CocoaMQTT5Client {
             printWarning("Localstorage initial failed for key: \(clientID)")
         }
     }
-
+    
     deinit {
         aliveTimer?.suspend()
         autoReconnTimer?.suspend()
@@ -604,7 +612,7 @@ extension CocoaMQTT5: CocoaMQTTSocketDelegate {
     }
 
     // ?
-    public func socketDidSecure(_ sock: GCDAsyncSocket) {
+    public func socketDidSecure(_ sock: MGCDAsyncSocket) {
         printDebug("Socket has successfully completed SSL/TLS negotiation")
         sendConnectFrame()
     }

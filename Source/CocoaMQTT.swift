@@ -76,6 +76,14 @@ import MqttCocoaAsyncSocket
     @objc optional func mqtt(_ mqtt: CocoaMQTT, didStateChangeTo state: CocoaMQTTConnState)
 }
 
+/// set mqtt version to 3.1.1
+public func setMqtt3Version(){
+    if let storage = CocoaMQTTStorage() {
+        storage.setMQTTVersion("3.1.1")
+    }
+}
+
+
 /**
  * Blueprint of the MQTT Client
  */
@@ -120,7 +128,7 @@ protocol CocoaMQTTClient {
 
 /// MQTT Client
 ///
-/// - Note: GCDAsyncSocket need delegate to extend NSObject
+/// - Note: MGCDAsyncSocket need delegate to extend NSObject
 public class CocoaMQTT: NSObject, CocoaMQTTClient {
     
     public weak var delegate: CocoaMQTTDelegate?
@@ -292,7 +300,7 @@ public class CocoaMQTT: NSObject, CocoaMQTTClient {
             printWarning("Localstorage initial failed for key: \(clientID)")
         }
     }
-    
+
     deinit {
         aliveTimer?.suspend()
         autoReconnTimer?.suspend()
@@ -550,7 +558,7 @@ extension CocoaMQTT: CocoaMQTTSocketDelegate {
     }
 
     // ?
-    public func socketDidSecure(_ sock: GCDAsyncSocket) {
+    public func socketDidSecure(_ sock: MGCDAsyncSocket) {
         printDebug("Socket has successfully completed SSL/TLS negotiation")
         sendConnectFrame()
     }
