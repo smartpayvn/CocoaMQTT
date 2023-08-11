@@ -42,7 +42,7 @@ public protocol CocoaMQTTWebSocketConnection: NSObjectProtocol {
 public protocol CocoaMQTTWebSocketConnectionBuilder {
     
     func buildConnection(forURL url: URL, withHeaders headers: [String: String]) throws -> CocoaMQTTWebSocketConnection
-
+    
 }
 
 // MARK: - CocoaMQTTWebSocket
@@ -50,11 +50,11 @@ public protocol CocoaMQTTWebSocketConnectionBuilder {
 public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     
     public var enableSSL = false
-
+    
     public var shouldConnectWithURIOnly = false
     
     public var headers: [String: String] = [:]
-
+    
     public typealias ConnectionBuilder = CocoaMQTTWebSocketConnectionBuilder
     
     public struct DefaultConnectionBuilder: ConnectionBuilder {
@@ -93,9 +93,9 @@ public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     }
     
     public func connect(toHost host: String, onPort port: UInt16, withTimeout timeout: TimeInterval) throws {
-
+        
         var urlStr = ""
-
+        
         if shouldConnectWithURIOnly {
             urlStr = "\(uri)"
         } else {
@@ -149,7 +149,7 @@ public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     internal var delegate: CocoaMQTTSocketDelegate?
     internal var delegateQueue: DispatchQueue?
     internal var internalQueue = DispatchQueue(label: "CocoaMQTTWebSocket")
- 
+    
     private var connection: CocoaMQTTWebSocketConnection?
     
     private func reset() {
@@ -201,58 +201,58 @@ public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     }
     
     class ScheduledReadController {
-         private var queue = DispatchQueue.init(label: "read.ws.cocoamqtt.emqx", qos: .default)
-         private var readBuffer = Data()
-         private(set) var scheduledReads: [ReadItem] = []
-
-         func append(_ item: ReadItem) {
-             queue.sync {
-                 scheduledReads.append(item)
-             }
-         }
-
-         func available() -> Bool {
-             return queue.sync {
-                 scheduledReads.first?.length ?? UInt.max <= readBuffer.count
-             }
-         }
-
-         func take() -> (Data, Int) {
-             queue.sync {
-                 let nextRead = scheduledReads.removeFirst()
-                 let readRange = readBuffer.startIndex..<Data.Index(nextRead.length)
-                 let readData = readBuffer.subdata(in: readRange)
-                 readBuffer.removeSubrange(readRange)
-                 return (readData, nextRead.tag)
-             }
-         }
-
-         func removeAll() {
-             queue.sync {
-                 readBuffer.removeAll()
-                 scheduledReads.removeAll()
-             }
-         }
-
-         func closestTimeout() -> DispatchWallTime? {
-             return queue.sync {
-                  scheduledReads.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout
-             }
-         }
-
-         func append(_ data: Data) {
-             queue.sync {
-                 readBuffer.append(data)
-             }
-         }
-     }
+        private var queue = DispatchQueue.init(label: "read.ws.cocoamqtt.emqx", qos: .default)
+        private var readBuffer = Data()
+        private(set) var scheduledReads: [ReadItem] = []
+        
+        func append(_ item: ReadItem) {
+            queue.sync {
+                scheduledReads.append(item)
+            }
+        }
+        
+        func available() -> Bool {
+            return queue.sync {
+                scheduledReads.first?.length ?? UInt.max <= readBuffer.count
+            }
+        }
+        
+        func take() -> (Data, Int) {
+            queue.sync {
+                let nextRead = scheduledReads.removeFirst()
+                let readRange = readBuffer.startIndex..<Data.Index(nextRead.length)
+                let readData = readBuffer.subdata(in: readRange)
+                readBuffer.removeSubrange(readRange)
+                return (readData, nextRead.tag)
+            }
+        }
+        
+        func removeAll() {
+            queue.sync {
+                readBuffer.removeAll()
+                scheduledReads.removeAll()
+            }
+        }
+        
+        func closestTimeout() -> DispatchWallTime? {
+            return queue.sync {
+                scheduledReads.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout
+            }
+        }
+        
+        func append(_ data: Data) {
+            queue.sync {
+                readBuffer.append(data)
+            }
+        }
+    }
     
     private var scheduledReads = ScheduledReadController()
     private lazy var readTimeoutTimer = ReusableTimer(queue: internalQueue)
     private func checkScheduledReads() {
         guard let theDelegate = delegate else { return }
         guard let delegateQueue = delegateQueue else { return }
-
+        
         readTimeoutTimer.reset()
         while scheduledReads.available() {
             let taken = scheduledReads.take()
@@ -282,33 +282,33 @@ public class CocoaMQTTWebSocket: CocoaMQTTSocketProtocol {
     }
     
     class ScheduledWriteController {
-         private var queue = DispatchQueue.init(label: "write.ws.cocoamqtt.emqx", qos: .default)
-         private(set) var scheduledWrites = Set<WriteItem>()
-
-         func insert(_ item: WriteItem) {
-             queue.sync {
-                 _ = scheduledWrites.insert(item)
-             }
-         }
-
-         func remove(_ item: WriteItem) -> WriteItem? {
-             return queue.sync {
-                 scheduledWrites.remove(item)
-             }
-         }
-
-         func removeAll() {
-             queue.sync {
-                 scheduledWrites.removeAll()
-             }
-         }
-
-         func closestTimeout() -> DispatchWallTime? {
-             return queue.sync {
-                  scheduledWrites.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout
-             }
-         }
-     }
+        private var queue = DispatchQueue.init(label: "write.ws.cocoamqtt.emqx", qos: .default)
+        private(set) var scheduledWrites = Set<WriteItem>()
+        
+        func insert(_ item: WriteItem) {
+            queue.sync {
+                _ = scheduledWrites.insert(item)
+            }
+        }
+        
+        func remove(_ item: WriteItem) -> WriteItem? {
+            return queue.sync {
+                scheduledWrites.remove(item)
+            }
+        }
+        
+        func removeAll() {
+            queue.sync {
+                scheduledWrites.removeAll()
+            }
+        }
+        
+        func closestTimeout() -> DispatchWallTime? {
+            return queue.sync {
+                scheduledWrites.sorted(by: { a,b in a.timeout < b.timeout }).first?.timeout
+            }
+        }
+    }
     
     private var scheduledWrites = ScheduledWriteController()
     private lazy var writeTimeoutTimer = ReusableTimer(queue: internalQueue)
@@ -336,7 +336,7 @@ extension CocoaMQTTWebSocket: CocoaMQTTWebSocketConnectionDelegate {
             completionHandler(false)
         }
     }
-
+    
     public func connectionOpened(_ conn: CocoaMQTTWebSocketConnection) {
         guard conn.isEqual(connection) else { return }
         guard let delegate = delegate else { return }
@@ -345,17 +345,17 @@ extension CocoaMQTTWebSocket: CocoaMQTTWebSocketConnectionDelegate {
             delegate.socketConnected(self)
         }
     }
-
+    
     public func connectionClosed(_ conn: CocoaMQTTWebSocketConnection, withError error: Error?) {
         guard conn.isEqual(connection) else { return }
         closeConnection(withError: error)
     }
-
+    
     public func connection(_ conn: CocoaMQTTWebSocketConnection, receivedString string: String) {
         guard let data = string.data(using: .utf8) else { return }
         self.connection(conn, receivedData: data)
     }
-
+    
     public func connection(_ conn: CocoaMQTTWebSocketConnection, receivedData data: Data) {
         guard conn.isEqual(connection) else { return }
         scheduledReads.append(data)
@@ -368,7 +368,7 @@ extension CocoaMQTTWebSocket: CocoaMQTTWebSocketConnectionDelegate {
 @available(OSX 10.15, iOS 13.0, watchOS 6.0, tvOS 13.0, *)
 public extension CocoaMQTTWebSocket {
     class FoundationConnection: NSObject, CocoaMQTTWebSocketConnection {
-
+        
         public weak var delegate: CocoaMQTTWebSocketConnectionDelegate?
         public lazy var queue = DispatchQueue(label: "CocoaMQTTFoundationWebSocketConnection-\(self.hashValue)")
         
@@ -439,13 +439,13 @@ extension CocoaMQTTWebSocket.FoundationConnection: URLSessionWebSocketDelegate {
             }
         }
     }
-
+    
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         queue.async {
             self.delegate?.connectionOpened(self)
         }
     }
-
+    
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         queue.async {
             self.delegate?.connectionClosed(self, withError: CocoaMQTTError.FoundationConnection.closed(closeCode))
@@ -503,19 +503,19 @@ extension CocoaMQTTWebSocket.StarscreamConnection: SSLTrustValidator {
 }
 
 extension CocoaMQTTWebSocket.StarscreamConnection: WebSocketDelegate {
-
+    
     public func websocketDidConnect(socket: WebSocketClient) {
         delegate?.connectionOpened(self)
     }
-
+    
     public func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
         delegate?.connectionClosed(self, withError: error)
     }
-
+    
     public func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
         delegate?.connection(self, receivedString: text)
     }
-
+    
     public func websocketDidReceiveData(socket: WebSocketClient, data: Data) {
         delegate?.connection(self, receivedData: data)
     }
