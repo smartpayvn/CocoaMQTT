@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/leeway1208/MqttCocoaAsyncSocket", from: "1.0.8"),
-        .package(path: "./Starscream")
+        .package(url: "https://github.com/smartpayvn/CocoaMQTT/tree/MQTT_iOS12/Starscream", from: "3.1.2")
     ],
     targets: [
         .target(name: "CocoaMQTT",
