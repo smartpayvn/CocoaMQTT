@@ -23,6 +23,6 @@ Pod::Spec.new do |s|
   
   s.subspec 'WebSockets' do |ss|
     ss.dependency "CocoaMQTT/Core"
-    ss.source_files = "Source/CocoaMQTTWebSocket.swift"
+    ss.source_files = "Source/CocoaMQTTWebSocket.swift", "Source/Starscream/*.swift"
   end
 end
